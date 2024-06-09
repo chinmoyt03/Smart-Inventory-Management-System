@@ -1,0 +1,109 @@
+<head>
+    <title>Shopping List</title>
+    <!-- CSS part-->
+    <style>
+        body {
+            background: #73bb82;
+            font-family: Arial;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #app {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+        }
+        input[type="text"] {
+            padding: 10px;
+            width: calc(100% - 22px);
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 15px;
+            background-color: #195fa5;
+            color: white;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+        }
+        li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <input type="text" v-model="textInput" placeholder="Type your shopping item here">
+        <button @click="processText">Add/Update Item</button>
+        <ul>
+            <li v-for="item in shoppingList" :key="item.item">
+                {{ item.item }} - {{ item.quantity }} kg
+            </li>
+        </ul>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data: {
+                textInput: '',
+                shoppingList: []
+            },
+            //Functionality to interact with the backend and handle the response appropriately to update the shopping list in the Vue.js frontend
+            methods: {
+                processText() {
+                    fetch('http://127.0.0.1:5000/process_text', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ text: this.textInput })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            this.fetchShoppingList();   // Refresh the shopping list after updating it
+                            this.textInput = '';        // Clear the input field
+                        } else {
+                            console.error('Error:', data.message);
+                        }
+                    })
+                    .catch(error => console.error('Error:', error));
+                },
+                fetchShoppingList() {
+                    fetch('http://127.0.0.1:5000/get_shopping_list')            // retrieve the shopping list from the backend
+                    .then(response => response.json())
+                    .then(data => {
+                        this.shoppingList = data;
+                    })
+                    .catch(error => console.error('Error:', error));
+                }
+            },
+            created() {
+                this.fetchShoppingList();           // Fetch the shopping list when the component is created
+            }
+        });
+    </script>
+</body>
+</html>
